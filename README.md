@@ -5,9 +5,9 @@ For Setup:
 3) command for downloading tkinter (pip install tk)
 
 Note:
-Your points in input file should be in this format. \n
-(1,2)\n
-(2,3)\n
+Your points in input file should be in this format.(each point in new line) 
+(1,2)
+(2,3)
 .
 .
 .
