@@ -62,11 +62,11 @@ class MainApp(Tk):
         self.geometry("1300x1000")
         self.coordinates = []
 
-        # Create a header
+
         header = tkinter.Label(self, text="Select an Algorithm", font=("Helvetica", 20, "bold"), fg="black")
         header.pack(pady=(180, 10))
 
-        # Buttons
+
         chooseCPP = Button(self, text="Closest Pair Problem", font=("Helvetica", 12), command=self.makeCPPWindow, width=20)
         chooseCPP.pack(pady=10)
         chooseKaratsuba = Button(self, text="Karatsuba Algorithm", font=("Helvetica", 12), command=self.makeKaratsubaWindow, width=20)
@@ -88,8 +88,6 @@ class CPP(Tk):
         self.title("Closest Pair Point")
         self.geometry("1300x1000")
         self.coordinates = []
-        
-        # Scrollable Canvas Frame
         container = Frame(self)
         container.pack(fill="both", expand=True)
 
@@ -112,17 +110,20 @@ class CPP(Tk):
         
         
     def generateRandomFiles(self):
-        curr_dir = os.getcwd();
+        curr_dir = os.getcwd()
         for i in range(1, 11):
             file_path = os.path.join(curr_dir, f"cpp{i}.txt")
             with open(file_path, "w") as file:
-                num_points = random.randint(50, 100);
-                for i in range(1, num_points + 1):
-                    random_int_1 = random.randint(1, 30)
-                    random_int_2 = random_int_1;
-                    while random_int_2 == random_int_1:
-                        random_int_2 = random.randint(1, 30)
-                    file.write(f"({str(random_int_1)}, {str(random_int_2)})\n");
+                num_points = random.randint(100, 1000)
+                points_set = set()  
+                while len(points_set) < num_points:
+                    random_int_1 = random.randint(1, 50)
+                    random_int_2 = random.randint(1, 50)
+                    if random_int_1 != random_int_2:
+                        points_set.add((random_int_1, random_int_2))
+                for point in points_set:
+                    file.write(f"({point[0]}, {point[1]})\n")
+
         
     def Selectfile(self):
         filename = filedialog.askopenfilename(
@@ -157,22 +158,32 @@ class CPP(Tk):
     def draw_coordinates(self):
         self.canvas.delete("all")
 
-        # Draw axes
         self.canvas.create_line(50, 1450, 1450, 1450, fill="black", width=2)  # X-axis
         self.canvas.create_line(50, 50, 50, 1450, fill="black", width=2)      # Y-axis
 
-        # Scaling factor
+        self.canvas.create_text(1450, 1470, text="X-axis", anchor="nw", font=("Arial", 12))
+        self.canvas.create_text(30, 50, text="Y-axis", anchor="ne", font=("Arial", 12), angle=90)
+
         max_x = max((x for x, y in self.coordinates), default=1)
         max_y = max((y for x, y in self.coordinates), default=1)
-        scale_x = (1400) / (max_x + 1)
-        scale_y = (1400) / (max_y + 1)
+        scale_x = 1400 / (max_x + 1)
+        scale_y = 1400 / (max_y + 1)
         scale = min(scale_x, scale_y)
 
-        # Draw points
+        for i in range(0, max_x + 1, max(1, max_x // 10)):
+            canvas_x = 50 + i * scale
+            self.canvas.create_line(canvas_x, 1450, canvas_x, 1445, fill="black")  # Tick mark
+            self.canvas.create_text(canvas_x, 1460, text=str(i), anchor="n", font=("Arial", 10))
+            
+        for i in range(0, max_y + 1, max(1, max_y // 10)):
+            canvas_y = 1450 - i * scale
+            self.canvas.create_line(50, canvas_y, 55, canvas_y, fill="black")  # Tick mark
+            self.canvas.create_text(40, canvas_y, text=str(i), anchor="e", font=("Arial", 10))
+
         for x, y in self.coordinates:
             canvas_x = 50 + x * scale
             canvas_y = 1450 - y * scale
-            self.canvas.create_oval(canvas_x - 5, canvas_y - 5, canvas_x + 5, canvas_y + 5, fill="blue")
+            self.canvas.create_oval(canvas_x - 3, canvas_y - 3, canvas_x + 3, canvas_y + 3, fill="blue")
 
     def find_closest_pair(self):
         if len(self.coordinates) < 2:
@@ -181,8 +192,6 @@ class CPP(Tk):
 
         points = [Point(x, y) for x, y in self.coordinates]
         min_dist, closest_pair = closest(points)
-
-        # Draw the closest pair
         if closest_pair:
             self.draw_closest_pair(closest_pair)
 
@@ -264,47 +273,31 @@ class Karatsuba(Tk):
         final_answer = self.applyKaratsuba(x, y);
         display_answer = tkinter.Label(self, text=f"Final Answer: {str(final_answer)}", font=("Helvetica", 20, "bold"), fg="black")
         display_answer.pack(anchor="w", padx=(10), pady=(10))
-    
     @lru_cache(maxsize=None)
     def applyKaratsuba(self, x, y):
-        if(x < 10 or y < 10): 
-            self.table.insert(parent = '', index = tkinter.END, values = (x, y, f"{str(x * y)} (Base Case)"));
-            return int(x * y);
-        
-        n_x = math.ceil(math.log10(x));
-        n_y = math.ceil(math.log10(y));
-        
-        break_point = int(max(n_x, n_y) / 2);
-        
-        a = int(x / pow(10, break_point));
-        b = int(x % pow(10, break_point));
-        
-        c = int(y / pow(10, break_point));
-        d = int(y % pow(10, break_point));
-            
-        
-        # equation 1:
-        # => (a * 10^(break_point) + b) * (c * 10^(break_point) + d)
-        # => ac * 10^(break_point) * 10^(break_point) + ad * 10^(break_point) + bc * 10^(break_point) + bd
-        # => ac * (10 ^ (break_point + break_point)) + (ad + bc) * 10^(break_point) + bd
-        # => ac * (10 ^ (2 * break_point)) + (ad + bc) * 10^(break_point) + bd
-        
-        # equation 2:
-        # => (a + b) (c + d) - ac - bd
-        # => ac + ad + bc + bd - ac - bd
-        # => ac - ac + bd - bd + ad + bc
-        # => ad + bc
-        
-        ac = int(self.applyKaratsuba (a, c));
-        bd = int(self.applyKaratsuba (b, d));
-        ad_plus_bc = int(self.applyKaratsuba (a + b, c + d) - ac - bd);
+        if x < 10 or y < 10:  
+            self.table.insert(parent='', index=tkinter.END, values=(x, y, f"{x * y} (Base Case)"))
+            return x * y
+        n_x = math.ceil(math.log10(x)) if x > 0 else 1
+        n_y = math.ceil(math.log10(y)) if y > 0 else 1
+        break_point = max(n_x, n_y) // 2
+        a, b = divmod(x, 10**break_point)
+        c, d = divmod(y, 10**break_point)
 
-        self.table.insert(parent = '', index = tkinter.END, values = (x, y, f"{str(ac)} X 10^{str(break_point)} + {str(ad_plus_bc)} X 10^{str(break_point)} + {str(bd)}"));
-        
-        solved_equation = ac * pow(10, 2 * break_point) + (ad_plus_bc) * pow(10, break_point) + bd;
-            
-        return int(solved_equation);
-    
+        ac = self.applyKaratsuba(a, c)
+        bd = self.applyKaratsuba(b, d)
+        ad_plus_bc = self.applyKaratsuba(a + b, c + d) - ac - bd
+
+        result = (ac * 10**(2 * break_point)) + (ad_plus_bc * 10**break_point) + bd
+
+        # Log the step
+        self.table.insert(
+            parent='', 
+            index=tkinter.END, 
+            values=(x, y, f"{ac} X 10^{2 * break_point} + {ad_plus_bc} X 10^{break_point} + {bd}")
+        )
+
+        return result
 
 app = MainApp()
 app.mainloop()
